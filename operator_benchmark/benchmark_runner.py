@@ -125,6 +125,22 @@ def parse_args():
         help='Run tests on the provided architecture (cpu, cuda)',
         default='None')
 
+    parser.add_argument(
+        '--flush_cache',
+        type=benchmark_utils.str2bool,
+        nargs='?',
+        const=True,
+        default=False,
+        help="Flush cache before each run"
+    )
+
+    parser.add_argument(
+        "--cache_size",
+        help="Size of cache (MB) to flush",
+        default=50,
+        type=int
+    )
+
     args, _ = parser.parse_known_args()
 
     if args.omp_num_threads:

@@ -224,13 +224,24 @@ class BenchmarkRunner(object):
                       test_case.test_config.input_config))
 
             mode = "Backward" if test_case.test_config.run_backward else "Forward"
+            def print_compute_metrics(time_us):
+                if hasattr(test_case.op_bench, "get_compute_characteristics"):
+                    compute_ch = test_case.op_bench.get_compute_characteristics()
+                    mem_access_bytes = 0
+                    if "mem_read" in compute_ch:
+                        mem_access_bytes += compute_ch["mem_read"]
+                    if "mem_write" in compute_ch:
+                        mem_access_bytes += compute_ch["mem_write"]
+                    print(f"Memory bandwidth: {mem_access_bytes / time_us:,.0f} MB")
             if self.num_runs > 1:
                 for run in range(self.num_runs):
+                    print_compute_metrics(reported_run_time_us[run])
                     print("Run: {}, {} Execution Time (us) : {:.3f}".format(
                         run,
                         mode, reported_run_time_us[run]))
                 print()
             else:
+                print_compute_metrics(reported_run_time_us[0])
                 print("{} Execution Time (us) : {:.3f}\n".format(
                     mode, reported_run_time_us[0]))
 
@@ -255,7 +266,13 @@ class BenchmarkRunner(object):
         func = test_case.run_forward
         if self.use_jit:
             func = test_case.run_jit_forward
-        forward_time = timeit.timeit(functools.partial(func, iters, print_per_iter, cuda_sync), number=1)
+        forward_time = 0
+        for _ in range(iters):
+            if self.args.flush_cache and not self.in_warmup:
+                a = torch.ones(self.args.cache_size * 1024 * 1024 // 4, dtype=torch.float)
+                b = torch.ones(self.args.cache_size * 1024 * 1024 // 4, dtype=torch.float)
+                a += b
+            forward_time += timeit.timeit(functools.partial(func, 1, print_per_iter, cuda_sync), number=1)
         return forward_time
 
     def _launch_backward(self, test_case, iters, print_per_iter=False):
@@ -393,7 +410,9 @@ class BenchmarkRunner(object):
                     launch_func = self._launch_forward
 
                 # Warmup
+                self.in_warmup = True
                 launch_func(test_case, self.args.warmup_iterations, print_per_iter=False)
+                self.in_warmup = False
                 # Actual Execution
                 reported_time = [self._measure_time(launch_func, test_case,
                                                     self.iters, self.print_per_iter)
