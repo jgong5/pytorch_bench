@@ -42,6 +42,12 @@ class SumBenchmark(op_bench.TorchBenchmarkBase):
     def forward(self, input_tensor, dim: int):
         return input_tensor.sum(dim=dim)
 
+    def get_compute_characteristics(self):
+        comp_ch = {}
+        comp_ch["mem_read"] = self.input_tensor.numel() * 4
+        comp_ch["mem_write"] = self.input_tensor.size(1) * 4 if self.inputs["dim"] == 0 else self.input_tensor.size(0) * 4
+        return comp_ch
+
 op_bench.generate_pt_test(sum_configs, SumBenchmark)
 
 if __name__ == "__main__":
