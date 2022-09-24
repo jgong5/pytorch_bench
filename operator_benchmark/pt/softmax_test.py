@@ -44,6 +44,28 @@ softmax_ops_list = op_bench.op_list(
     ],
 )
 
+softmax_two_dims_ops_list = op_bench.op_list(
+    attr_names=['op_name', 'op_func'],
+    attrs=[
+        ['Softmax', nn.Softmax],
+    ],
+)
+
+
+softmax_two_dims_configs = op_bench.config_list(
+    attr_names=[
+        'N', 'seq_len', 'dim'
+    ],
+    attrs=[
+        [700, 23258, 0],
+        [700, 23258, 1],
+        [1024, 23258, 1]
+    ],
+    cross_product_configs={
+        'device': ['cpu', 'cuda'],
+    },
+    tags=['2d']
+)
 
 class SoftmaxBenchmark(op_bench.TorchBenchmarkBase):
     def init(self, N, C, H, W, device, op_func):
@@ -55,11 +77,44 @@ class SoftmaxBenchmark(op_bench.TorchBenchmarkBase):
     def forward(self, input):
         return self.op_func(input)
 
+class Softmax2DimsBenchmark(op_bench.TorchBenchmarkBase):
+    def init(self, N, seq_len, dim, device, op_func):
+        self.inputs = {
+            "input": torch.rand(N, seq_len, device=device)
+        }
+        self.dim = dim
+        self.op_func = op_func(dim=dim)
+
+    def forward(self, input):
+        return self.op_func(input)
+
+    def get_compute_characteristics(self):
+        comp_ch = {}
+        comp_ch["mem_read"] = self.inputs['input'].numel() * 4
+        comp_ch["mem_write"] = self.inputs['input'].size(1) * 4 if self.dim == 0 else self.inputs['input'].size(0) * 4
+        return comp_ch
+
+import torchdynamo
+from torchinductor import config
+config.cpp.simdlen = 8
+
+class Softmax2DimsTIBenchmark(Softmax2DimsBenchmark):
+    import torchdynamo
+    @torchdynamo.optimize()
+    def forward(self, input):
+        return self.op_func(input)
 
 op_bench.generate_pt_tests_from_op_list(softmax_ops_list,
                                         softmax_configs_short + softmax_configs_long,
                                         SoftmaxBenchmark)
 
+op_bench.generate_pt_tests_from_op_list(softmax_two_dims_ops_list,
+                                        softmax_two_dims_configs,
+                                        Softmax2DimsBenchmark)
+
+op_bench.generate_pt_tests_from_op_list(softmax_two_dims_ops_list,
+                                        softmax_two_dims_configs,
+                                        Softmax2DimsTIBenchmark)
 
 if __name__ == "__main__":
     op_bench.benchmark_runner.main()
