@@ -1,0 +1,119 @@
+buf0: SchedulerNode(ComputedBuffer)
+buf0.writes = 
+    [   MemoryDep(name='buf0', index=c0, size=(s0, s1)),
+        MemoryDep(name='buf0', index=c0, size=(s0,))]
+buf0.unmet_dependencies = []
+buf0.met_dependencies = [MemoryDep(name='arg0_1', index=c0, size=(s0*s1,))]
+buf0.group.device = cpu
+buf0.group.iteration = ((s0,), (s1,))
+buf0.sizes = ([s0], [s1])
+class buf0_loop_body:
+    var_ranges = {z0: s0, z1: s1}
+    index0 = s1*z0 + z1
+    index1 = z0
+    def body(self, ops):
+        get_index = self.get_index('index0')
+        load = ops.load('arg0_1', get_index)
+        get_index_1 = self.get_index('index1')
+        reduction = ops.reduction('buf0', torch.float32, torch.float32, 'sum', get_index_1, load)
+        return reduction
+
+
+buf1: SchedulerNode(ComputedBuffer)
+buf1.writes = 
+    [   MemoryDep(name='buf1', index=c0, size=(s0, s1)),
+        MemoryDep(name='buf1', index=c0, size=(s0,))]
+buf1.unmet_dependencies = [MemoryDep(name='buf0', index=c0, size=(s0, s1))]
+buf1.met_dependencies = [MemoryDep(name='arg0_1', index=c0, size=(s0*s1,))]
+buf1.group.device = cpu
+buf1.group.iteration = ((s0,), (s1,))
+buf1.sizes = ([s0], [s1])
+class buf1_loop_body:
+    var_ranges = {z0: s0, z1: s1}
+    index0 = s1*z0 + z1
+    index1 = z0
+    index2 = s1
+    def body(self, ops):
+        get_index = self.get_index('index0')
+        load = ops.load('arg0_1', get_index)
+        get_index_1 = self.get_index('index1')
+        load_1 = ops.load('buf0', get_index_1)
+        get_index_2 = self.get_index('index2')
+        index_expr = ops.index_expr(get_index_2, torch.float32)
+        div = ops.div(load_1, index_expr)
+        sub = ops.sub(load, div)
+        square = ops.square(sub)
+        get_index_3 = self.get_index('index1')
+        reduction = ops.reduction('buf1', torch.float32, torch.float32, 'sum', get_index_3, square)
+        return reduction
+
+
+buf2: SchedulerNode(ComputedBuffer)
+buf2.writes = 
+    [   MemoryDep(name='buf2', index=c0, size=(s0, s1)),
+        MemoryDep(name='buf2', index=c0, size=(s0,))]
+buf2.unmet_dependencies = []
+buf2.met_dependencies = [MemoryDep(name='arg0_1', index=c0, size=(s0*s1,))]
+buf2.group.device = cpu
+buf2.group.iteration = ((s0,), (s1,))
+buf2.sizes = ([s0], [s1])
+class buf2_loop_body:
+    var_ranges = {z0: s0, z1: s1}
+    index0 = s1*z0 + z1
+    index1 = z0
+    def body(self, ops):
+        get_index = self.get_index('index0')
+        load = ops.load('arg0_1', get_index)
+        get_index_1 = self.get_index('index1')
+        reduction = ops.reduction('buf2', torch.float32, torch.float32, 'sum', get_index_1, load)
+        return reduction
+
+
+buf3: SchedulerNode(ComputedBuffer)
+buf3.writes = [MemoryDep(name='buf3', index=c0, size=(s0*s1,))]
+buf3.unmet_dependencies = 
+    [   MemoryDep(name='buf1', index=c0, size=(s0, s1)),
+        MemoryDep(name='buf2', index=c0, size=(s0, s1))]
+buf3.met_dependencies = 
+    [   MemoryDep(name='arg0_1', index=c0, size=(s0*s1,)),
+        MemoryDep(name='arg1_1', index=c1, size=(s0, s1)),
+        MemoryDep(name='arg2_1', index=c1, size=(s0, s1))]
+buf3.group.device = cpu
+buf3.group.iteration = ((s0, s1), ())
+buf3.sizes = ([s0, s1], [])
+class buf3_loop_body:
+    var_ranges = {z0: s0, z1: s1}
+    index0 = s1*z0 + z1
+    index1 = z0
+    index2 = s1
+    index3 = z1
+    def body(self, ops):
+        get_index = self.get_index('index0')
+        load = ops.load('arg0_1', get_index)
+        get_index_1 = self.get_index('index1')
+        load_1 = ops.load('buf2', get_index_1)
+        get_index_2 = self.get_index('index2')
+        index_expr = ops.index_expr(get_index_2, torch.float32)
+        div = ops.div(load_1, index_expr)
+        sub = ops.sub(load, div)
+        get_index_3 = self.get_index('index1')
+        load_2 = ops.load('buf1', get_index_3)
+        get_index_4 = self.get_index('index2')
+        index_expr_1 = ops.index_expr(get_index_4, torch.float32)
+        div_1 = ops.div(load_2, index_expr_1)
+        constant = ops.constant(1e-05, torch.float32)
+        add = ops.add(div_1, constant)
+        sqrt = ops.sqrt(add)
+        reciprocal = ops.reciprocal(sqrt)
+        mul = ops.mul(sub, reciprocal)
+        get_index_5 = self.get_index('index3')
+        load_3 = ops.load('arg1_1', get_index_5)
+        mul_1 = ops.mul(mul, load_3)
+        get_index_6 = self.get_index('index3')
+        load_4 = ops.load('arg2_1', get_index_6)
+        add_1 = ops.add(mul_1, load_4)
+        get_index_7 = self.get_index('index0')
+        store = ops.store('buf3', get_index_7, add_1, None)
+        return store
+
+
