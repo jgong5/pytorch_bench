@@ -1,0 +1,71 @@
+[compile_fx.py:75 INFO] Compiling FORWARDS graph
+[scheduler.py:564 DEBUG] Creating schedule for node: ComputedBuffer(name='buf0', layout=FixedLayout('cpu', torch.float32, size=[1, 1, s1, s1], stride=[s1**2, s1**2, s1, 1]), data=Reduction(
+  'cpu',
+  torch.float32,
+  load(arg0_1, i3 + i2 * s1 + r0 * s1**2),
+  ranges=[1, 1, s1, s1],
+  reduction_ranges=[s0],
+  reduction_type=max,
+  origins={amax}
+))
+[scheduler.py:564 DEBUG] Creating schedule for node: ComputedBuffer(name='buf1', layout=FixedLayout('cpu', torch.float32, size=[1, 1, s1, s1], stride=[s1**2, s1**2, s1, 1]), data=Reduction(
+  'cpu',
+  torch.float32,
+  exp(load(arg0_1, i3 + i2 * s1 + r0 * s1**2) - load(buf0, i3 + i2 * s1)),
+  ranges=[1, 1, s1, s1],
+  reduction_ranges=[s0],
+  reduction_type=sum,
+  origins={sum_1}
+))
+[scheduler.py:564 DEBUG] Creating schedule for node: ComputedBuffer(name='buf2', layout=FixedLayout('cpu', torch.float32, size=[1, s0, s1, s1], stride=[s0*s1**2, s1**2, s1, 1]), data=Pointwise(
+  'cpu',
+  torch.float32,
+  exp(load(arg0_1, i3 + i1 * s1**2 + i2 * s1) - load(buf0, i3 + i2 * s1)) / load(buf1, i3 + i2 * s1),
+  ranges=[1, s0, s1, s1],
+  origins={div}
+))
+[cpp.py:622 DEBUG] Creating new kernel for args: ([], [])
+[cpp.py:451 DEBUG] deciding parallel depth for 28 threads:
+[cpp.py:459 DEBUG]   expr: s1**2, size_hint: 147456, parallel: 1, seq: 2359296
+[cpp.py:405 DEBUG] Parallel depth: 1:
+[cpp.py:406 DEBUG] For(i0 in ks0**2, parallel 0, simd False, collapsed False, reduction_vars None)
+
+[cpp.py:438 DEBUG] loads: auto tmp0 = in_ptr0[i0 + (i1*(ks0*ks0))];
+
+[cpp.py:439 DEBUG] compute: 
+[cpp.py:440 DEBUG] stores: tmp1 = std::max(tmp1, tmp0);
+
+[cpp.py:622 DEBUG] Creating new kernel for args: (['in_ptr0', 'out_ptr0', 'ks0', 'ks1'], ['arg0_1', 'buf0', 's1', 's0'])
+[cpp.py:451 DEBUG] deciding parallel depth for 28 threads:
+[cpp.py:459 DEBUG]   expr: s1**2, size_hint: 147456, parallel: 1, seq: 2359296
+[cpp.py:405 DEBUG] Parallel depth: 1:
+[cpp.py:406 DEBUG] For(i0 in ks0**2, parallel 0, simd False, collapsed False, reduction_vars None)
+
+[cpp.py:438 DEBUG] loads: auto tmp0 = in_ptr0[i0 + (i1*(ks0*ks0))];
+auto tmp1 = out_ptr0[i0];
+
+[cpp.py:439 DEBUG] compute: auto tmp2 = tmp0 - tmp1;
+auto tmp3 = std::exp(tmp2);
+
+[cpp.py:440 DEBUG] stores: tmp4 += tmp3;
+
+[cpp.py:622 DEBUG] Creating new kernel for args: (['in_ptr0', 'out_ptr0', 'out_ptr1', 'ks0', 'ks1'], ['arg0_1', 'buf0', 'buf1', 's1', 's0'])
+[cpp.py:451 DEBUG] deciding parallel depth for 28 threads:
+[cpp.py:459 DEBUG]   expr: s0, size_hint: 16, parallel: 1, seq: 2359296
+[cpp.py:459 DEBUG]   expr: s1**2, size_hint: 147456, parallel: 16, seq: 147456.0
+[cpp.py:405 DEBUG] Parallel depth: 2:
+[cpp.py:406 DEBUG] For(i0 in ks1, parallel 0, simd False, collapsed False, reduction_vars None)
+  For(i1 in ks0**2, parallel 0, simd True, collapsed False, reduction_vars None)
+
+[cpp.py:438 DEBUG] loads: auto tmp0 = in_ptr0[i1 + (i0*(ks0*ks0))];
+auto tmp1 = out_ptr0[i1];
+auto tmp4 = out_ptr1[i1];
+
+[cpp.py:439 DEBUG] compute: auto tmp2 = tmp0 - tmp1;
+auto tmp3 = std::exp(tmp2);
+auto tmp5 = tmp3 / tmp4;
+
+[cpp.py:440 DEBUG] stores: out_ptr2[i1 + (i0*(ks0*ks0))] = tmp5;
+
+[graph.py:336 INFO] Output code: /tmp/torchinductor_jgong5/hj/chjgi6nbz34i6c37gxjrjew36nn6zw6fnv4flfxo37kdcsmreqqe.py
+[debug.py:260 WARNING] model_inference_0 debug trace: /tmp/torchinductor_jgong5/hj/chjgi6nbz34i6c37gxjrjew36nn6zw6fnv4flfxo37kdcsmreqqe.debug
