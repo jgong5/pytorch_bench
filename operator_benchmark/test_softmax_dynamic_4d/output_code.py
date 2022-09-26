@@ -20,7 +20,7 @@ extern "C" void kernel(const float* __restrict__ in_ptr0,
     #pragma omp parallel num_threads(28)
     {
         #pragma omp for
-        for(long i0=0; i0<ks0*ks0; ++i0)
+        for(long i0=0; i0<ks0*ks1; ++i0)
         {
             {
                 {
@@ -29,7 +29,7 @@ extern "C" void kernel(const float* __restrict__ in_ptr0,
                     for(long i1=0; i1<ks1; ++i1)
                     {
                         {
-                            auto tmp0 = in_ptr0[i0 + (i1*(ks0*ks0))];
+                            auto tmp0 = in_ptr0[i1 + (i0*ks1)];
                             tmp1 = std::max(tmp1, tmp0);
                         }
                     }
@@ -38,7 +38,7 @@ extern "C" void kernel(const float* __restrict__ in_ptr0,
             }
         }
         #pragma omp for
-        for(long i0=0; i0<ks0*ks0; ++i0)
+        for(long i0=0; i0<ks0*ks1; ++i0)
         {
             {
                 {
@@ -47,7 +47,7 @@ extern "C" void kernel(const float* __restrict__ in_ptr0,
                     for(long i1=0; i1<ks1; ++i1)
                     {
                         {
-                            auto tmp0 = in_ptr0[i0 + (i1*(ks0*ks0))];
+                            auto tmp0 = in_ptr0[i1 + (i0*ks1)];
                             auto tmp1 = out_ptr0[i0];
                             auto tmp2 = tmp0 - tmp1;
                             auto tmp3 = std::exp(tmp2);
@@ -58,20 +58,21 @@ extern "C" void kernel(const float* __restrict__ in_ptr0,
                 }
             }
         }
-        #pragma omp for simd simdlen(8)collapse(2)
-        for(long i0=0; i0<ks1; ++i0)
+        #pragma omp for
+        for(long i0=0; i0<ks0*ks1; ++i0)
         {
-            for(long i1=0; i1<ks0*ks0; ++i1)
+            #pragma omp simd simdlen(8)
+            for(long i1=0; i1<ks1; ++i1)
             {
                 {
                     {
-                        auto tmp0 = in_ptr0[i1 + (i0*(ks0*ks0))];
-                        auto tmp1 = out_ptr0[i1];
-                        auto tmp4 = out_ptr1[i1];
+                        auto tmp0 = in_ptr0[i1 + (i0*ks1)];
+                        auto tmp1 = out_ptr0[i0];
+                        auto tmp4 = out_ptr1[i0];
                         auto tmp2 = tmp0 - tmp1;
                         auto tmp3 = std::exp(tmp2);
                         auto tmp5 = tmp3 / tmp4;
-                        out_ptr2[i1 + (i0*(ks0*ks0))] = tmp5;
+                        out_ptr2[i1 + (i0*ks1)] = tmp5;
                     }
                 }
             }
@@ -85,10 +86,10 @@ def call(arg0_1):
     arg0_1_size = arg0_1.size()
     s0 = arg0_1_size[1]
     s1 = arg0_1_size[2]
-    buf0 = empty_strided((1, 1, s1, s1), (s1*s1, s1*s1, s1, 1), device='cpu', dtype=torch.float32)
-    buf1 = empty_strided((1, 1, s1, s1), (s1*s1, s1*s1, s1, 1), device='cpu', dtype=torch.float32)
+    buf0 = empty_strided((1, s0, s1, 1), (s0*s1, s1, 1, s0*s1), device='cpu', dtype=torch.float32)
+    buf1 = empty_strided((1, s0, s1, 1), (s0*s1, s1, 1, s0*s1), device='cpu', dtype=torch.float32)
     buf2 = empty_strided((1, s0, s1, s1), (s0*(s1*s1), s1*s1, s1, 1), device='cpu', dtype=torch.float32)
-    kernel0(c_void_p(arg0_1.data_ptr()), c_void_p(buf0.data_ptr()), c_void_p(buf1.data_ptr()), c_void_p(buf2.data_ptr()), c_long(s1), c_long(s0))
+    kernel0(c_void_p(arg0_1.data_ptr()), c_void_p(buf0.data_ptr()), c_void_p(buf1.data_ptr()), c_void_p(buf2.data_ptr()), c_long(s0), c_long(s1))
     return (buf2, )
 
 

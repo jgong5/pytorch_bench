@@ -21,10 +21,10 @@ class Repro(torch.nn.Module):
     
     
     def forward(self, arg0_1):
-        amax = torch.ops.aten.amax.default(arg0_1, [1], True)
+        amax = torch.ops.aten.amax.default(arg0_1, [3], True)
         sub = torch.ops.aten.sub.Tensor(arg0_1, amax);  arg0_1 = amax = None
         exp = torch.ops.aten.exp.default(sub);  sub = None
-        sum_1 = torch.ops.aten.sum.dim_IntList(exp, [1], True)
+        sum_1 = torch.ops.aten.sum.dim_IntList(exp, [3], True)
         div = torch.ops.aten.div.Tensor(exp, sum_1);  exp = sum_1 = None
         return (div,)
         
