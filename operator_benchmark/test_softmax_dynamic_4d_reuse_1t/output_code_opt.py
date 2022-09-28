@@ -22,16 +22,16 @@ extern "C" void kernel(const float* __restrict__ in_ptr0,
     {
         {
             {
-                    using Vec = at::vec::Vectorized<float>;
-                    Vec tmp1(-std::numeric_limits<float>::infinity());
-                    for(long i1=0; i1<ks1/8; ++i1)
+                float tmp1 = -std::numeric_limits<float>::infinity();
+                #pragma omp simd simdlen(8) reduction(max:tmp1)
+                for(long i1=0; i1<ks1; ++i1)
+                {
                     {
-                        {
-                            Vec tmp0 = Vec::loadu(in_ptr0 + i1*8 + (i0*ks1));
-                            Vec tmp1 = at::vec::maximum(tmp1, tmp0);
-                        }
+                        auto tmp0 = in_ptr0[i1 + (i0*ks1)];
+                        tmp1 = std::max(tmp1, tmp0);
                     }
-                    out_ptr0[i0] = at::vec::vec_reduce_all([](Vec& x, Vec& y) { return at::vec::maximum(x, y); }, tmp1);
+                }
+                out_ptr0[i0] = tmp1;
             }
         }
     //}
@@ -40,21 +40,20 @@ extern "C" void kernel(const float* __restrict__ in_ptr0,
     //{
         {
             {
-                    using Vec = at::vec::Vectorized<float>;
-                    Vec tmp4(0);
-                    assert(ks1 % 8 == 0);
-                    for(long i1=0; i1<ks1 / 8; ++i1)
+                float tmp4 = 0;
+                #pragma omp simd simdlen(8) reduction(+:tmp4)
+                for(long i1=0; i1<ks1; ++i1)
+                {
                     {
-                        {
-                            Vec tmp0 = Vec::loadu(in_ptr0 + i1 * 8 + (i0*ks1));
-                            Vec tmp1 = Vec::loadu(out_ptr0 + i0);
-                            Vec tmp2 = tmp0 - tmp1;
-                            Vec tmp3 = tmp2.exp();
-                            tmp3.store(out_ptr1 + i1 * 8 + (i0*ks1));
-                            tmp4 += tmp3;
-                        }
+                        auto tmp0 = in_ptr0[i1 + (i0*ks1)];
+                        auto tmp1 = out_ptr0[i0];
+                        auto tmp2 = tmp0 - tmp1;
+                        auto tmp3 = std::exp(tmp2);
+                        out_ptr1[i1 + (i0*ks1)] = tmp3;
+                        tmp4 += tmp3;
                     }
-                    out_ptr2[i0] = at::vec::vec_reduce_all([](Vec& x, Vec& y) { return x+y; }, tmp4);
+                }
+                out_ptr2[i0] = tmp4;
             }
         }
     //}
