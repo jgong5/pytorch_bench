@@ -25,16 +25,16 @@ extern "C" void kernel(const float* __restrict__ in_ptr0,
         {
             {
                 {
-                    float tmp1 = -std::numeric_limits<float>::infinity();
-                    #pragma omp simd simdlen(8) reduction(max:tmp1)
-                    for(long i1=0; i1<ks1; ++i1)
+                    using Vec = at::vec::Vectorized<float>;
+                    Vec tmp1(-std::numeric_limits<float>::infinity());
+                    for(long i1=0; i1<ks1/8; ++i1)
                     {
                         {
-                            auto tmp0 = in_ptr0[i1 + (i0*ks1)];
-                            tmp1 = std::max(tmp1, tmp0);
+                            Vec tmp0 = Vec::loadu(in_ptr0 + i1*8 + (i0*ks1));
+                            Vec tmp1 = at::vec::maximum(tmp1, tmp0);
                         }
                     }
-                    out_ptr0[i0] = tmp1;
+                    out_ptr0[i0] = at::vec::vec_reduce_all([](Vec& x, Vec& y) { return at::vec::maximum(x, y); }, tmp1);
                 }
             }
         //}
