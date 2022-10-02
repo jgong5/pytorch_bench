@@ -20,7 +20,7 @@ extern "C" void kernel(const float* __restrict__ in_ptr0,
                        const long ks0,
                        const long ks1)
 {
-    #pragma omp parallel num_threads(28)
+    #pragma omp parallel
     {
         #pragma omp for
         for(long i0=0; i0<ks0; ++i0)
