@@ -27,33 +27,33 @@ extern "C" void kernel(const float* __restrict__ in_ptr0,
         {
             {
                 {
-                    using Vec = at::vec::Vectorized<float>;
-                    Vec tmp1(0);
-                    for(long i1=0; i1<ks1/8; ++i1)
+                    float tmp1 = 0;
+                    #pragma omp simd simdlen(8) reduction(+:tmp1)
+                    for(long i1=0; i1<ks1; ++i1)
                     {
                         {
-                            Vec tmp0 = Vec::loadu(in_ptr0 + i1*8 + (i0*ks1));
-                            Vec tmp1 = tmp1 + tmp0;
+                            auto tmp0 = in_ptr0[i1 + (i0*ks1)];
+                            tmp1 += tmp0;
                         }
                     }
-                    out_ptr0[i0] = at::vec::vec_reduce_all([](Vec& x, Vec& y) { return x+y; }, tmp1);
+                    out_ptr0[i0] = tmp1;
                 }
             }
-        //}
-        //#pragma omp for
-        //for(long i0=0; i0<ks0; ++i0)
-        //{
+        }
+        #pragma omp for
+        for(long i0=0; i0<ks0; ++i0)
+        {
             {
                 {
-                    using Vec = at::vec::Vectorized<float>;
-                    Vec tmp6(0);
-                    Vec tmp7(0);
-                    for(long i1=0; i1<ks1/8; ++i1)
+                    float tmp6 = 0;
+                    float tmp7 = 0;
+                    #pragma omp simd simdlen(8) reduction(+:tmp6) reduction(+:tmp7)
+                    for(long i1=0; i1<ks1; ++i1)
                     {
                         {
-                            auto tmp0 = Vec::loadu(in_ptr0 + i1*8 + (i0*ks1));
-                            auto tmp1 = Vec::loadu(out_ptr0 + i0);
-                            Vec tmp2(static_cast<float>(ks1));
+                            auto tmp0 = in_ptr0[i1 + (i0*ks1)];
+                            auto tmp1 = out_ptr0[i0];
+                            auto tmp2 = static_cast<float>(ks1);
                             auto tmp3 = tmp1 / tmp2;
                             auto tmp4 = tmp0 - tmp3;
                             auto tmp5 = tmp4 * tmp4;
@@ -61,36 +61,36 @@ extern "C" void kernel(const float* __restrict__ in_ptr0,
                             tmp7 += tmp0;
                         }
                     }
-                    out_ptr1[i0] = at::vec::vec_reduce_all([](Vec& x, Vec& y) { return x+y; }, tmp6);
-                    out_ptr2[i0] = at::vec::vec_reduce_all([](Vec& x, Vec& y) { return x+y; }, tmp7);
+                    out_ptr1[i0] = tmp6;
+                    out_ptr2[i0] = tmp7;
                 }
             }
-        //}
-        //#pragma omp for
-        //for(long i0=0; i0<ks0; ++i0)
-        //{
-            for(long i1=0; i1<ks1/8; ++i1)
+        }
+        #pragma omp for
+        for(long i0=0; i0<ks0; ++i0)
+        {
+            #pragma omp simd simdlen(8)
+            for(long i1=0; i1<ks1; ++i1)
             {
                 {
                     {
-                        using Vec = at::vec::Vectorized<float>;
-                        auto tmp0 = Vec::loadu(in_ptr0 + i1*8 + (i0*ks1));
-                        auto tmp1 = Vec::loadu(out_ptr2 + i0);
-                        auto tmp5 = Vec::loadu(out_ptr1 + i0);
-                        auto tmp12 = Vec::loadu(in_ptr1 + i1*8);
-                        auto tmp14 = Vec::loadu(in_ptr2 + i1*8);
-                        Vec tmp2(static_cast<float>(ks1));
+                        auto tmp0 = in_ptr0[i1 + (i0*ks1)];
+                        auto tmp1 = out_ptr2[i0];
+                        auto tmp5 = out_ptr1[i0];
+                        auto tmp12 = in_ptr1[i1];
+                        auto tmp14 = in_ptr2[i1];
+                        auto tmp2 = static_cast<float>(ks1);
                         auto tmp3 = tmp1 / tmp2;
                         auto tmp4 = tmp0 - tmp3;
                         auto tmp6 = tmp5 / tmp2;
-                        Vec tmp7(static_cast<float>(1e-05));
+                        auto tmp7 = static_cast<float>(1e-05);
                         auto tmp8 = tmp6 + tmp7;
-                        auto tmp9 = tmp8.sqrt();
-                        auto tmp10 = tmp9.reciprocal();
+                        auto tmp9 = std::sqrt(tmp8);
+                        auto tmp10 = 1 / tmp9;
                         auto tmp11 = tmp4 * tmp10;
                         auto tmp13 = tmp11 * tmp12;
                         auto tmp15 = tmp13 + tmp14;
-                        tmp15.store(out_ptr3 + i1*8 + (i0*ks1));
+                        out_ptr3[i1 + (i0*ks1)] = tmp15;
                     }
                 }
             }
@@ -127,4 +127,4 @@ if __name__ == "__main__":
     arg0_1 = rand_strided((384, 1024), (1024, 1), device='cpu', dtype=torch.float32)
     arg1_1 = rand_strided((1024, ), (1, ), device='cpu', dtype=torch.float32)
     arg2_1 = rand_strided((1024, ), (1, ), device='cpu', dtype=torch.float32)
-    print_performance(lambda: call(arg0_1, arg1_1, arg2_1))
+    print_performance(lambda: call(arg0_1, arg1_1, arg2_1), flush_cache=False)
