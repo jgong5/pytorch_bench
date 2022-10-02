@@ -269,9 +269,7 @@ class BenchmarkRunner(object):
         forward_time = 0
         for _ in range(iters):
             if self.args.flush_cache and not self.in_warmup:
-                a = torch.ones(self.args.cache_size * 1024 * 1024 // 4, dtype=torch.float)
-                b = torch.ones(self.args.cache_size * 1024 * 1024 // 4, dtype=torch.float)
-                a += b
+                benchmark_utils.cpu_flush_cache(self.args.cache_size)
             forward_time += timeit.timeit(functools.partial(func, 1, print_per_iter, cuda_sync), number=1)
         return forward_time
 

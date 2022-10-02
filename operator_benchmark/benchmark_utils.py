@@ -345,3 +345,21 @@ def process_arg_list(arg_list):
         return None
 
     return [fr.strip() for fr in arg_list.split(',') if len(fr.strip()) > 0]
+
+a = None
+b = None
+import time
+import torch
+def cpu_flush_cache(cache_size=50):
+    start = time.perf_counter()
+    global a
+    global b
+    if a == None:
+        a = torch.ones(cache_size * 1024 * 1024 // 4, dtype=torch.float)
+    if b == None:
+        b = torch.ones(cache_size * 1024 * 1024 // 4, dtype=torch.float)
+    a.fill_(2)
+    b.fill_(3)
+    a += b
+    end = time.perf_counter()
+    return end-start
