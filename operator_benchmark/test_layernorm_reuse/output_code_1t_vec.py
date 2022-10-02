@@ -38,10 +38,10 @@ extern "C" void kernel(const float* __restrict__ in_ptr0,
                     out_ptr0[i0] = at::vec::vec_reduce_all([](Vec& x, Vec& y) { return x+y; }, tmp1);
                 }
             }
-        //}
-        //#pragma omp for
-        //for(long i0=0; i0<ks0; ++i0)
-        //{
+        }
+        #pragma omp for
+        for(long i0=0; i0<ks0; ++i0)
+        {
             {
                 {
                     using Vec = at::vec::Vectorized<float>;
@@ -64,10 +64,10 @@ extern "C" void kernel(const float* __restrict__ in_ptr0,
                     out_ptr2[i0] = at::vec::vec_reduce_all([](Vec& x, Vec& y) { return x+y; }, tmp7);
                 }
             }
-        //}
-        //#pragma omp for
-        //for(long i0=0; i0<ks0; ++i0)
-        //{
+        }
+        #pragma omp for
+        for(long i0=0; i0<ks0; ++i0)
+        {
             for(long i1=0; i1<ks1/8; ++i1)
             {
                 {
