@@ -18,7 +18,7 @@ extern "C" void kernel(const float* __restrict__ in_ptr0,
 {
     float* out_ptr0 = out_ptr2;
     float* out_ptr1 = out_ptr3;
-    #pragma omp parallel num_threads(28)
+    #pragma omp parallel
     {
         #pragma omp for
         for(long i0=0; i0<ks0*ks1; ++i0)
