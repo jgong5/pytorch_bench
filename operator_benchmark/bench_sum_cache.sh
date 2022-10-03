@@ -1,0 +1,2 @@
+python -m intel_extension_for_pytorch.cpu.launch --no_python --node_id 0 python -m pt.sum_test --tag_filter long --iterations 10
+python -m intel_extension_for_pytorch.cpu.launch --no_python --node_id 0 python -m pt.sum_test --tag_filter short --iterations 10
