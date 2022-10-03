@@ -1,6 +1,0 @@
-extension.cpp
-setup.py
-benchmark_cpp_extension.egg-info/PKG-INFO
-benchmark_cpp_extension.egg-info/SOURCES.txt
-benchmark_cpp_extension.egg-info/dependency_links.txt
-benchmark_cpp_extension.egg-info/top_level.txt
