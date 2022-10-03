@@ -16,6 +16,13 @@ layernorm_configs_short = op_bench.cross_product_configs(
     tags=["short"],
 )
 
+layernorm_configs_2d = op_bench.cross_product_configs(
+    dims=(
+        (384, 1024),
+    ),
+    tags=["2d"],
+)
+
 
 class LayerNormBenchmark(op_bench.TorchBenchmarkBase):
     def init(self, dims):
@@ -31,9 +38,22 @@ class LayerNormBenchmark(op_bench.TorchBenchmarkBase):
         return F.layer_norm(
             input, input.size()[1:], weight=weight, bias=bias, eps=eps)
 
+import torchdynamo
+from torchinductor import config
+config.cpp.simdlen = 8
+config.realize_reads_threshold = 1
+#config.inplace_buffers = True
+
+class LayerNormTIBenchmark(LayerNormBenchmark):
+    @torchdynamo.optimize()
+    def forward(self, input, weight, bias, eps: float):
+        return super().forward(input, weight, bias, eps)
 
 op_bench.generate_pt_test(layernorm_configs_short, LayerNormBenchmark)
 
+op_bench.generate_pt_test(layernorm_configs_2d, LayerNormBenchmark)
+
+op_bench.generate_pt_test(layernorm_configs_2d, LayerNormTIBenchmark)
 
 if __name__ == "__main__":
     op_bench.benchmark_runner.main()
